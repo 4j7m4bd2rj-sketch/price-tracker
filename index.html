@@ -1,0 +1,322 @@
+# index.html
+
+```html
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>원자재 가격 모니터링 대시보드</title>
+
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Pretendard:wght@400;500;600;700&display=swap" rel="stylesheet">
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+<style>
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body {
+    font-family: 'Pretendard', sans-serif;
+    background: #f4f7fb;
+    color: #1f2937;
+    padding: 32px;
+}
+
+.header {
+    background: linear-gradient(135deg, #0f172a, #1e293b);
+    color: white;
+    border-radius: 24px;
+    padding: 40px;
+    margin-bottom: 28px;
+    box-shadow: 0 10px 30px rgba(0,0,0,0.12);
+}
+
+.header h1 {
+    font-size: 42px;
+    font-weight: 700;
+    margin-bottom: 16px;
+}
+
+.header p {
+    font-size: 20px;
+    line-height: 1.7;
+    opacity: 0.95;
+}
+
+.grid {
+    display: grid;
+    grid-template-columns: repeat(12, 1fr);
+    gap: 24px;
+}
+
+.card {
+    background: white;
+    border-radius: 24px;
+    padding: 28px;
+    box-shadow: 0 6px 20px rgba(15, 23, 42, 0.06);
+}
+
+.summary-card {
+    grid-column: span 3;
+}
+
+.summary-title {
+    font-size: 18px;
+    color: #6b7280;
+    margin-bottom: 16px;
+    font-weight: 600;
+}
+
+.summary-value {
+    font-size: 42px;
+    font-weight: 700;
+    margin-bottom: 10px;
+}
+
+.summary-desc {
+    font-size: 18px;
+    line-height: 1.6;
+    color: #4b5563;
+}
+
+.main-chart {
+    grid-column: span 8;
+}
+
+.side-panel {
+    grid-column: span 4;
+}
+
+.section-title {
+    font-size: 28px;
+    font-weight: 700;
+    margin-bottom: 20px;
+}
+
+.section-text {
+    font-size: 19px;
+    line-height: 1.9;
+    color: #374151;
+}
+
+.highlight {
+    color: #0f766e;
+    font-weight: 700;
+}
+
+.metric-box {
+    background: #f8fafc;
+    border-radius: 18px;
+    padding: 20px;
+    margin-bottom: 18px;
+}
+
+.metric-title {
+    font-size: 17px;
+    color: #6b7280;
+    margin-bottom: 10px;
+}
+
+.metric-value {
+    font-size: 32px;
+    font-weight: 700;
+}
+
+.list-box {
+    margin-top: 14px;
+}
+
+.list-box li {
+    font-size: 18px;
+    margin-bottom: 14px;
+    line-height: 1.7;
+}
+
+.footer {
+    margin-top: 28px;
+    text-align: center;
+    color: #6b7280;
+    font-size: 16px;
+}
+
+canvas {
+    margin-top: 20px;
+}
+
+@media (max-width: 1200px) {
+    .summary-card,
+    .main-chart,
+    .side-panel {
+        grid-column: span 12;
+    }
+}
+</style>
+</head>
+<body>
+
+<div class="header">
+    <h1>🌾 식품 원자재 가격 자동 추적 시스템</h1>
+    <p>
+        FRED API 기반 원자재 가격 자동 수집 및 시각화 대시보드<br>
+        구매 협상 타이밍과 원가 리스크 대응을 위한 데이터 기반 의사결정 지원 시스템
+    </p>
+</div>
+
+<div class="grid">
+
+    <div class="card summary-card">
+        <div class="summary-title">추적 품목</div>
+        <div class="summary-value">5개</div>
+        <div class="summary-desc">
+            쌀, 밀, 옥수수, 대두, 설탕 가격 데이터를 월 단위로 자동 수집
+        </div>
+    </div>
+
+    <div class="card summary-card">
+        <div class="summary-title">수집 기간</div>
+        <div class="summary-value">2020~</div>
+        <div class="summary-desc">
+            과거 가격 데이터를 누적 저장하여 장기 가격 흐름 분석 가능
+        </div>
+    </div>
+
+    <div class="card summary-card">
+        <div class="summary-title">자동화 방식</div>
+        <div class="summary-value">crontab</div>
+        <div class="summary-desc">
+            매월 자동 실행을 통해 반복 업무를 최소화하고 데이터 최신 상태 유지
+        </div>
+    </div>
+
+    <div class="card summary-card">
+        <div class="summary-title">활용 목적</div>
+        <div class="summary-value">SCM</div>
+        <div class="summary-desc">
+            구매 협상 및 원가 관리 과정에서 데이터 기반 판단 지원
+        </div>
+    </div>
+
+    <div class="card main-chart">
+        <div class="section-title">📈 원자재 가격 추이</div>
+
+        <canvas id="priceChart" height="130"></canvas>
+    </div>
+
+    <div class="card side-panel">
+        <div class="section-title">📌 프로젝트 개요</div>
+
+        <div class="section-text">
+            기존에는 담당자가 원자재 가격을 직접 확인하며 경험 기반으로 협상 시점을 판단했습니다.
+            
+            본 프로젝트는 <span class="highlight">FRED API 기반 자동 수집 시스템</span>을 구축해 원자재 가격 데이터를 정기적으로 수집하고, 시각화 및 변동률 분석을 통해 계약 협상과 원가 관리 의사결정을 지원하도록 설계했습니다.
+        </div>
+
+        <div style="height:24px"></div>
+
+        <div class="metric-box">
+            <div class="metric-title">활용 기술</div>
+            <div class="metric-value">Python · API · Excel</div>
+        </div>
+
+        <div class="metric-box">
+            <div class="metric-title">자동화 범위</div>
+            <div class="metric-value">수집 → 저장 → 시각화</div>
+        </div>
+    </div>
+
+    <div class="card" style="grid-column: span 6;">
+        <div class="section-title">⚙ 핵심 기능</div>
+
+        <ul class="list-box">
+            <li>FRED API 기반 원자재 가격 자동 수집</li>
+            <li>품목별 가격 추이 및 변동률 시각화</li>
+            <li>Excel 자동 저장 및 누적 데이터 관리</li>
+            <li>crontab 기반 정기 자동 실행</li>
+        </ul>
+    </div>
+
+    <div class="card" style="grid-column: span 6;">
+        <div class="section-title">🎯 기대 효과</div>
+
+        <ul class="list-box">
+            <li>계약 갱신 시 데이터 기반 협상 자료 활용</li>
+            <li>원자재 급등락 구간 조기 파악</li>
+            <li>구매 및 원가 리스크 대응력 향상</li>
+            <li>수작업 모니터링 시간 절감</li>
+        </ul>
+    </div>
+
+</div>
+
+<div class="footer">
+    Data Source: FRED API · Python 기반 자동화 프로젝트
+</div>
+
+<script>
+const ctx = document.getElementById('priceChart');
+
+new Chart(ctx, {
+    type: 'line',
+    data: {
+        labels: ['2020', '2021', '2022', '2023', '2024'],
+        datasets: [
+            {
+                label: '밀',
+                data: [100, 120, 180, 150, 165],
+                borderWidth: 4,
+                tension: 0.35
+            },
+            {
+                label: '옥수수',
+                data: [90, 110, 145, 130, 138],
+                borderWidth: 4,
+                tension: 0.35
+            },
+            {
+                label: '대두',
+                data: [80, 95, 125, 118, 130],
+                borderWidth: 4,
+                tension: 0.35
+            }
+        ]
+    },
+    options: {
+        responsive: true,
+        plugins: {
+            legend: {
+                labels: {
+                    font: {
+                        size: 18
+                    }
+                }
+            }
+        },
+        scales: {
+            x: {
+                ticks: {
+                    font: {
+                        size: 16
+                    }
+                }
+            },
+            y: {
+                ticks: {
+                    font: {
+                        size: 16
+                    }
+                }
+            }
+        }
+    }
+});
+</script>
+
+</body>
+</html>
+```
